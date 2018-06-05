@@ -20,7 +20,9 @@ class NeighborhoodFactory(object):
 
 class GaussianNeighborhood(object):
 
-    name = 'gaussian'
+    def __init__(self):
+        self.name = 'gaussian'
+        return
 
     @staticmethod
     def calculate(distance_matrix, radius, dim):
@@ -31,8 +33,10 @@ class GaussianNeighborhood(object):
 
 
 class BubbleNeighborhood(object):
-
-    name = 'bubble'
+    
+    def __init__(self):
+        self.name = 'bubble'
+        return
 
     @staticmethod
     def calculate(distance_matrix, radius, dim):
