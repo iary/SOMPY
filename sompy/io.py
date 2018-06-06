@@ -62,7 +62,7 @@ class OutputToHDF5(HDF5):
         return
     
     
-class inputFromHDF5(HDF5):
+class InputFromHDF5(HDF5):
 
     def __init__(self,hdf5File):
         super(self.__class__,self).__init__(hdf5File,'r')
