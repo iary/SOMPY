@@ -11,7 +11,7 @@ from .sompy import SOM
 class OutputToHDF5(HDF5):
     
     def __init__(self,outfile):
-        super(OutputToHDF5,self).__init__(outfile,'w')        
+        super(self.__class__,self).__init__(outfile,'w')        
         classname = self.__class__.__name__
         funcname = self.__class__.__name__+"."+sys._getframe().f_code.co_name
         return
@@ -62,7 +62,7 @@ class OutputToHDF5(HDF5):
         return
     
     
-class somHDF5(HDF5):
+class inputFromHDF5(HDF5):
 
     def __init__(self,hdf5File):
         super(self.__class__,self).__init__(hdf5File,'r')
