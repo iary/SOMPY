@@ -8,6 +8,8 @@ SOMPY.egg-info/top_level.txt
 sompy/__init__.py
 sompy/codebook.py
 sompy/decorators.py
+sompy/hdf5.py
+sompy/io.py
 sompy/neighborhood.py
 sompy/normalization.py
 sompy/sompy.py
