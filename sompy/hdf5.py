@@ -1,5 +1,8 @@
 #! /usr/bin/env python
 
+__author__ = ("Alex Merson")
+__version__ = "1.0.0"
+
 import sys
 import h5py
 import numpy as np

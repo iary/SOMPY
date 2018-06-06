@@ -1,5 +1,8 @@
 #! /usr/bin/env python
 
+__author__ = ("Alex Merson")
+__version__ = "1.0.0"
+
 import sys,fnmatch
 import numpy as np
 from .hdf5 import HDF5
