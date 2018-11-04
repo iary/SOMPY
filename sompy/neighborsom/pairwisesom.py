@@ -75,8 +75,6 @@ def euclidean_chidistances(X, Y=None, Y_norm_squared=None, squared=False,
     paired_distances : distances betweens pairs of elements of X and Y.
     """
     X, Y = check_pairwise_arrays(X, Y)
-    np.savetxt('X.txt',X)
-    np.savetxt('Y.txt',Y)
     if sigma is not None:
         if type(sigma) is not np.ndarray : 
             sigma = np.array(sigma)
@@ -109,14 +107,10 @@ def euclidean_chidistances(X, Y=None, Y_norm_squared=None, squared=False,
         YY = row_norms(Y, squared=True)[np.newaxis, :]
     
     distances = safe_sparse_dot(X/sigma/sigma, Y.T, dense_output=True)
-    np.savetxt('XY.txt',distances)
-    np.savetxt('XX.txt',XX)
-    np.savetxt('YY.txt',YY)
     distances *= -2
     distances += XX
     for i in range(distances.shape[0]):
         distances[i,:] += row_norms(Y/sigma[i,:], squared=True)
-    np.savetxt('dist.txt',distances)
     
     np.maximum(distances, 0, out=distances)
 
