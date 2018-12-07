@@ -5,7 +5,7 @@ __version__ = "1.0.0"
 
 import sys,fnmatch
 import numpy as np
-from .hdf5 import HDF5
+from .hdf5 import HDF5,addByteStrings,removeByteStrings
 from .codebook import Codebook
 from .sompy import SOM
 
@@ -19,11 +19,15 @@ class OutputToHDF5(HDF5):
         funcname = self.__class__.__name__+"."+sys._getframe().f_code.co_name
         return
     
-    def __call__(self,SOM):
-        self.writeSOM(SOM)
+    def __call__(self,SOM,verbose=False):
+        funcname = self.__class__.__name__+"."+sys._getframe().f_code.co_name
+        self.writeSOM(SOM,verbose=verbose)
         return
 
-    def writeCodebook(self,codebook):
+    def writeCodebook(self,codebook,verbose=False):
+        funcname = self.__class__.__name__+"."+sys._getframe().f_code.co_name
+        if verbose:
+            print("Writing Codebook to file...")
         self.mkGroup("/codebook")
         attrib = {}
         attrib["lattice"] = codebook.lattice
@@ -31,14 +35,20 @@ class OutputToHDF5(HDF5):
         attrib["initialized"] = codebook.initialized
         attrib["mapsize"] = codebook.mapsize
         self.addAttributes("/codebook",attrib)                
-        self.writeDataset(codebook.matrix,"matrix",hdfdir="/codebook")
+        self.writeSOMDataset(codebook.matrix,"matrix",hdfdir="/codebook")
         return
 
-    def writeDataset(self,arr,name,hdfdir="/"):
+    def writeSOMDataset(self,arr,name,hdfdir="/",verbose=False):
+        funcname = self.__class__.__name__+"."+sys._getframe().f_code.co_name
+        if verbose:
+            print("Writing "+name+" to file...")
         self.addDataset(hdfdir,name,arr,maxshape=arr.shape)
         return
 
-    def writeSOM(self,SOM,storeNormalizedData=False):                
+    def writeSOM(self,SOM,storeNormalizedData=False,verbose=False):                
+        funcname = self.__class__.__name__+"."+sys._getframe().f_code.co_name
+        if verbose:
+            print("Writing SOM to file...")
         # Store basic attributes to dictionary
         attrib = {}
         keys = ["name","training","initialization","_dim","_dlabel","_dlen","mapshape"]
@@ -53,20 +63,21 @@ class OutputToHDF5(HDF5):
         # Write attributes to file
         self.addAttributes("/",attrib)                
         # Write BMU
-        self.writeDataset(SOM._bmu,"_bmu",hdfdir="/")
+        self.writeSOMDataset(SOM._bmu,"_bmu",hdfdir="/",verbose=verbose)
         # Write mask
-        self.writeDataset(SOM.mask,"mask",hdfdir="/")
+        self.writeSOMDataset(SOM.mask,"mask",hdfdir="/",verbose=verbose)
         # Write _data
         if storeNormalizedData:
-            self.writeDataset(SOM._data,"_data",hdfdir="/")
+            self.writeSOMDataset(SOM._data,"_data",hdfdir="/",verbose=verbose)
         # Write data_raw
-        self.writeDataset(SOM.data_raw,"data_raw",hdfdir="/")
+        self.writeSOMDataset(SOM.data_raw,"data_raw",hdfdir="/",verbose=verbose)
         # Write distance matrix
-        self.writeDataset(SOM._distance_matrix,"_distance_matrix",hdfdir="/")
+        self.writeSOMDataset(SOM._distance_matrix,"_distance_matrix",hdfdir="/",verbose=verbose)
         # Write component names
-        self.writeDataset(SOM._component_names,"_component_names",hdfdir="/")
+        self.writeSOMDataset(addByteStrings(np.array(SOM._component_names)),"_component_names",
+                             hdfdir="/",verbose=verbose)
         # Write codebook
-        self.writeCodebook(SOM.codebook)
+        self.writeCodebook(SOM.codebook,verbose=verbose)
         return
     
     
@@ -79,12 +90,15 @@ class InputFromHDF5(HDF5):
         return
 
     def __call__(self):
+        funcname = self.__class__.__name__+"."+sys._getframe().f_code.co_name
         return self.createSOM()
         
 
-    def createCodebook(self):
+    def createCodebook(self,verbose=False):
         funcname = self.__class__.__name__+"."+sys._getframe().f_code.co_name
         # Create codebook object
+        if verbose:
+            print("Creating codebook...")
         attrib = self.readAttributes("/codebook")
         CODE = Codebook(list(attrib["mapsize"]),lattice=attrib["lattice"])
         CODE.nnodes = int(attrib["nnodes"])
@@ -92,8 +106,10 @@ class InputFromHDF5(HDF5):
         CODE.initialized = attrib["initialized"]
         return CODE        
     
-    def createNeighborhood(self):
+    def createNeighborhood(self,verbose=False):
         funcname = self.__class__.__name__+"."+sys._getframe().f_code.co_name
+        if verbose:
+            print("Creating neighborhood object...")
         # Get name for neighborhood object
         name = self.readAttributes("/",required=["neighborhood"])["neighborhood"]
         # Create neighborhood object
@@ -109,8 +125,10 @@ class InputFromHDF5(HDF5):
         return NEIGHBORHOOD
     
     
-    def createNormalizer(self):        
+    def createNormalizer(self,verbose=False):        
         funcname = self.__class__.__name__+"."+sys._getframe().f_code.co_name
+        if verbose:
+            print("Creating normalizer object...")
         # Get name for normalizer
         name = self.readAttributes("/",required=["_normalizer"])["_normalizer"]
         # Create normalizer object
@@ -139,17 +157,19 @@ class InputFromHDF5(HDF5):
         return NORM
         
             
-    def createSOM(self):        
+    def createSOM(self,verbose=False):        
         funcname = self.__class__.__name__+"."+sys._getframe().f_code.co_name
+        if verbose:
+            print("Creating SOM from file...")
         # Read and create codebook object
-        CODE = self.createCodebook()
+        CODE = self.createCodebook(verbose=verbose)
         # Extract raw data
         data = np.array(self.fileObj["/data_raw"])
         # Extract component names
-        components = np.array(self.fileObj["/_component_names"])        
+        components = removeByteStrings(np.array(self.fileObj["/_component_names"]))
         # Create neighborhood and normalizer classes
-        neighborhood = self.createNeighborhood()
-        normalizer = self.createNormalizer()
+        neighborhood = self.createNeighborhood(verbose=verbose)
+        normalizer = self.createNormalizer(verbose=verbose)
         # Read remaining attributes
         attrib = self.readAttributes("/")
         # Create SOM object
@@ -157,8 +177,10 @@ class InputFromHDF5(HDF5):
                       mapsize=CODE.mapsize,mask=None,mapshape=attrib["mapshape"],\
                       lattice=CODE.lattice,initialization=attrib["initialization"],\
                       training=attrib["training"],name=attrib["name"],\
-                      component_names=components)
+                      component_names=list(components))
         # Update attributes
+        if verbose:
+            print("Updating SOM attributes...")
         som.mask = np.array(self.fileObj["/mask"])
         som._dlabel = attrib["_dlabel"]
         som._bmu = np.array(self.fileObj["/_bmu"])
