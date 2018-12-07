@@ -13,6 +13,10 @@ sompy/io.py
 sompy/neighborhood.py
 sompy/normalization.py
 sompy/sompy.py
+sompy/neighborsom/__init__.py
+sompy/neighborsom/base.py
+sompy/neighborsom/classification.py
+sompy/neighborsom/pairwisesom.py
 sompy/visualization/__init__.py
 sompy/visualization/bmuhits.py
 sompy/visualization/dotmap.py

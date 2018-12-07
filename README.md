@@ -1,37 +1,32 @@
 SOMPY
 -----
-A Python Library for Self Organizing Map (SOM)
+A Python Library for Self Organizing Map (SOM), credits at the end of this doc.
 
-As much as possible, the structure of SOM is similar to `somtoolbox` in Matlab. It has the following functionalities:
+This version has been forked and modified to be used for astronomical purposes. [ID]
 
-1. Only Batch training, which is faster than online training. It has parallel processing option similar to `sklearn` format and it speeds up the training procedure, but it depends on the data size and mainly the size of the SOM grid.I couldn't manage the memory problem and therefore, I recommend single core processing at the moment. But nevertheless, the implementation of the algorithm is carefully done for all those important matrix calculations, such as `scipy` sparse matrix and `numexpr` for calculation of Euclidean distance.
-2. PCA (or RandomPCA (default)) initialization, using `sklearn` or random initialization.
-3. component plane visualization (different modes).
-4. Hitmap.
-5. U-Matrix visualization.
-6. 1-d or 2-d SOM with only rectangular, planar grid. (works well in comparison with hexagonal shape, when I was checking in Matlab with somtoolbox).
-7. Different methods for function approximation and predictions (mostly using Sklearn).
+-----
+
+### New features
 
 
-### Dependencies:
-SOMPY has the following dependencies (tested only with Python 2.7x):
-- numpy
-- scipy
-- scikit-learn
-- numexpr
-- matplotlib
-- pandas
-- ipdb
-- h5py
+##### Class ``Whatever``
 
-### Installation:
-```Python
-python setup.py install
+PLEASE ALEX PUT HERE A DESCRIPTION OF WHAT YOU DID.
+
+##### Function ``project_realdata`` 
+
+Similar to ``project_data``, but it takes also an array-like input with standard deviation of the data to map. The basic idea is that the nearest BMU is assigned with a chi<sup>2</sup>-distance, i.e. (X-Y)<sup>2</sup>/Sigma<sup>2</sup>.
+Example:
+```python
+# given two datasets of galaxy colors, one to train (data_train) 
+# and one to be mapped (data_map). For the latter we also know
+# 1sigma error for each color (errdata_map).
+som = sompy.SOMFactory.build(data_train, mapsize=(20,20))
+som.train(shared_memory='yes')
+ac = som.bmu_ind_to_xy(som.project_realdata(data_map,errdata_map))
 ```
 
 
-Many thanks to @sebastiandev, the library is now standardized in a pythonic tradition. Below you can see some basic examples, showing how to use the library.
-But I recommend you to go through the codes. There are several functionalities already implemented, but not documented. I would be very happy to add your new examples here. 
 
 [Basice Example](https://gist.github.com/sevamoo/035c56e7428318dd3065013625f12a11)
 
@@ -47,10 +42,4 @@ Iván Vallés @ivallesp
 ```
 
 
-For more information, you can contact me via sevamoo@gmail.com or svm@arch.ethz.ch, but please report an issue first.
 
-
-
-
-Thanks a lot. 
-Best Vahid Moosavi

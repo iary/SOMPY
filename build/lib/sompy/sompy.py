@@ -20,6 +20,7 @@ from multiprocessing.dummy import Pool
 from multiprocessing import cpu_count
 from scipy.sparse import csr_matrix
 from sklearn import neighbors
+import neighborsom 
 from sklearn.externals.joblib import Parallel, delayed, load, dump
 import sys
 
@@ -29,7 +30,7 @@ from .neighborhood import NeighborhoodFactory
 from .normalization import NormalizatorFactory
 
 #lbugnon
-import sompy,ipdb
+import sompy
 #
 
 class ComponentNamesError(Exception):
@@ -251,7 +252,7 @@ class SOM(object):
                             radiusin=train_finetune_radiusin, radiusfin=train_finetune_radiusfin,trainlen_factor=train_len_factor,maxtrainlen=maxtrainlen)
         logging.debug(
             " --------------------------------------------------------------")
-        logging.info(" Final quantization error: %f" % np.mean(self._bmu[1]))
+        logging.info(" Final Quantization Error: %f" % np.mean(self._bmu[1]))
 
     def _calculate_ms_and_mpd(self):
         mn = np.min(self.codebook.mapsize)
@@ -271,7 +272,7 @@ class SOM(object):
         ms, mpd = self._calculate_ms_and_mpd()
         #lbugnon: add maxtrainlen
         trainlen = min(int(np.ceil(30*mpd)),maxtrainlen) if not trainlen else trainlen
-        print("maxtrainlen %d",maxtrainlen)
+        #print("maxtrainlen %d",maxtrainlen)
         #lbugnon: add trainlen_factor
         trainlen=int(trainlen*trainlen_factor)
         
@@ -301,7 +302,7 @@ class SOM(object):
             radiusin = max(1, np.ceil(ms/8.)/4) if not radiusin else radiusin
             radiusfin = 1 if not radiusfin else radiusfin # max(1, ms/128)
 
-        print("maxtrainlen %d",maxtrainlen)
+        #print("maxtrainlen %d",maxtrainlen)
         
         #lbugnon: add trainlen_factor
         trainlen=int(trainlen_factor*trainlen)
@@ -430,12 +431,12 @@ class SOM(object):
 
         return np.around(new_codebook, decimals=6)
 
-    def project_data(self, data):
+    def project_data(self, data, nn=1, w='uniform'):
         """
         Projects a data set to a trained SOM. It is based on nearest
         neighborhood search module of scikitlearn, but it is not that fast.
         """
-        clf = neighbors.KNeighborsClassifier(n_neighbors=1)
+        clf = neighbors.KNeighborsClassifier(n_neighbors=nn,weights=w,n_jobs=1)  
         labels = np.arange(0, self.codebook.matrix.shape[0])
         clf.fit(self.codebook.matrix, labels)
 
@@ -445,6 +446,28 @@ class SOM(object):
         data = self._normalizer.normalize_by(self.data_raw, data)
 
         return clf.predict(data)
+
+    def project_realdata(self, data, errdata, nn=1, w='uniform'):
+        """
+        Projects a real data set to a trained SOM. It is similar to 
+        project_data(), that is based on nearest neighborhood search module 
+        of scikitlearn. Data error bars taken into account as weights in 
+        the (Euclidean) distance function.
+        """
+        wf = lambda d: 1./d**3 
+        clf = neighborsom.KNeighborsClassifier(n_neighbors=nn,weights=wf,n_jobs=1,algorithm='brute')  
+        labels = np.arange(0, self.codebook.matrix.shape[0])
+        clf.fit(self.codebook.matrix, labels)
+
+        # The codebook values are all normalized
+        # we can normalize the input data based on mean and std of
+        # original data
+        data = self._normalizer.normalize_by(self.data_raw, data)
+        # Normalize also error bars
+        errdata = errdata/np.std(self.data_raw)
+        # after normalization you can divide X/sigma^2
+        return clf.predict(data,errdata)
+
 
     def predict_by(self, data, target, k=5, wt='distance'):
         # here it is assumed that target is the last column in the codebook
